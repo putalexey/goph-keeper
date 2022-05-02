@@ -12,10 +12,10 @@ LDFLAGS=-ldflags "-X main.buildVersion=${VERSION} -X main.buildDate=${BUILD}"
 build: build_client build_server
 
 build_client:
-	go build ${LDFLAGS} -o bin/gk-client ./cmd/client
+	go build ${LDFLAGS} -o bin/gk-client ./cmd/gk-client
 
 build_server:
-	go build ${LDFLAGS} -o bin/gk-server ./cmd/server
+	go build ${LDFLAGS} -o bin/gk-server ./cmd/gk-server
 
 #docs:
 #	cd internal/app/shortener/
