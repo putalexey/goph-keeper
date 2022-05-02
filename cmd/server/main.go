@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"github.com/putalexey/goph-keeper/cmd/server/config"
+	"github.com/putalexey/goph-keeper/internal/server/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
