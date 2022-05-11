@@ -17,6 +17,9 @@ build_client:
 build_server:
 	go build ${LDFLAGS} -o bin/gk-server ./cmd/gk-server
 
+proto:
+	cd internal/common/grpc; protoc -I=. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./models.proto ./services.proto
+
 #docs:
 #	cd internal/app/shortener/
 #	swag init -g ./shortner.go
