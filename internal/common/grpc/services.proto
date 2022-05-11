@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+option go_package = "github.com/putalexey/goph-keeper/internal/common/grpc";
+
+package gkeeper.services;
+
+import "models.proto";
+
+service GKServer {
+  rpc Register(models.Empty) returns (models.Empty);
+  rpc Authorize(models.Empty) returns (models.Empty);
+  rpc CreateRecord(models.Empty) returns (models.Empty);
+  rpc UpdateRecord(models.Empty) returns (models.Empty);
+  rpc DeleteRecord(models.Empty) returns (models.Empty);
+  rpc GetUpdates(models.Empty) returns (models.Empty);
+}

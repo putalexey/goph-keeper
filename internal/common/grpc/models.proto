@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option go_package = "github.com/putalexey/goph-keeper/internal/common/grpc";
+
+package gkeeper.models;
+
+import "google/protobuf/timestamp.proto";
+
+enum RecordType {
+  Text = 0;
+  File = 1;
+  Login = 2;
+  Bank = 3;
+}
+
+enum EventAction {
+  ActionCreate = 0;
+  ActionUpdate = 1;
+  ActionDelete = 2;
+}
+
+
+message User {
+  string UUID = 1;
+  string Login = 2;
+  string Password = 3;
+}
+
+message Record {
+  string UUID = 1;
+  string UserUUID = 2;
+  string Name = 3;
+  string Type = 4;
+  bytes Data = 5;
+  string Comment = 6;
+  google.protobuf.Timestamp CreatedAt = 7;
+  google.protobuf.Timestamp UpdatedAt = 8;
+  google.protobuf.Timestamp DeletedAt = 9;
+}
+
+message Event {
+  string UUID = 1;
+  string UserUUID = 2;
+  string RecordUUID = 3;
+  google.protobuf.Timestamp Date = 4;
+  string Action = 5;
+  bytes Data = 6;
+}
+
+message Empty {}
