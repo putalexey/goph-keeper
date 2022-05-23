@@ -1,13 +1,18 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/putalexey/goph-keeper/internal/server"
 	"github.com/putalexey/goph-keeper/internal/server/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 )
 
 var buildVersion = "N/A"
@@ -30,6 +35,26 @@ func main() {
 	defer logclose()
 
 	logger.Info("goph-keeper server")
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	defer stop()
+
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	finished := sync.WaitGroup{}
+	finished.Add(1)
+	go func() {
+		defer finished.Done()
+		err := server.Run(ctx, conf)
+		if err != nil {
+			logger.Error(err)
+		}
+		cancel()
+	}()
+
+	finished.Wait()
+	logger.Info("goph-keeper server exited")
 }
 
 func checkArgs() bool {
