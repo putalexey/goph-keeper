@@ -8,6 +8,13 @@ type User struct {
 	Password string `json:"password"`
 }
 
+type Auth struct {
+	UUID      string     `json:"uuid"`
+	UserUUID  string     `json:"user_uuid"`
+	Token     string     `json:"token"`
+	CreatedAt *time.Time `json:"created_at"`
+}
+
 const (
 	TypeText  = "text"
 	TypeFile  = "file"

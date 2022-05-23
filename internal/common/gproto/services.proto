@@ -13,4 +13,5 @@ service GKServer {
   rpc UpdateRecord(models.Empty) returns (models.Empty);
   rpc DeleteRecord(models.Empty) returns (models.Empty);
   rpc GetUpdates(models.Empty) returns (models.Empty);
+  rpc Ping(models.PingPong) returns (models.PingPong);
 }

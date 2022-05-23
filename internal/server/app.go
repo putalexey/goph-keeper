@@ -20,7 +20,7 @@ func Run(ctx context.Context, cfg *config.ServerConfig) error {
 	}
 	initStorages(server)
 
-	grpcServer := interfaces.NewGopherGRPCServer(ctx, server.StoragesContainer)
+	grpcServer := interfaces.NewGopherGRPCServer(ctx, server.StoragesContainer, cfg.Address)
 
 	wg := sync.WaitGroup{}
 
@@ -48,7 +48,10 @@ type Server struct {
 
 // initStorage initializes storagers container
 func initStorages(server *Server) {
-	server.StoragesContainer.UserStorage = storage.NewUserDBStorage(server.db)
-	server.StoragesContainer.RecordStorage = storage.NewRecordDBStorage(server.db)
-	server.StoragesContainer.EventStorage = storage.NewEventStorager(server.db)
+	server.StoragesContainer = &storage.StoragesContainer{
+		UserStorage:   storage.NewUserDBStorage(server.db),
+		AuthStorage:   storage.NewAuthDBStorage(server.db),
+		RecordStorage: storage.NewRecordDBStorage(server.db),
+		EventStorage:  storage.NewEventStorager(server.db),
+	}
 }

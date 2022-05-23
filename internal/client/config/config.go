@@ -7,6 +7,8 @@ import (
 	"os"
 )
 
+const DEFAULT_CONFIG_FILE = "gk-client.json"
+
 type ClientConfig struct {
 	// address of the goph-keeper server
 	ServerHost string `env:"SERVER_HOST" json:"server_host"`
@@ -40,6 +42,11 @@ func Parse() (*ClientConfig, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		err = parseConfigFile(cfg, DEFAULT_CONFIG_FILE)
+		if err != nil && !os.IsNotExist(err) {
+			return nil, err
+		}
 	}
 
 	err = env.Parse(cfg)
@@ -69,7 +76,7 @@ func parseConfigFile(cfg *ClientConfig, configFile string) error {
 
 func parseFlags() map[string]string {
 	configFileFlag := flag.String("c", "", "Файл конфига в формате JSON")
-	serverHostFlag := flag.String("s", "", "Адрес запуска HTTP-сервера")
+	serverHostFlag := flag.String("s", "", "Адрес сервера")
 	logfilePathFlag := flag.String("l", "", "Путь к файлу лога (по-умолчанию вывод в консоль)")
 	flag.Parse()
 

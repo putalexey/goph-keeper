@@ -20,6 +20,9 @@ build_server:
 proto:
 	cd internal/common/gproto; protoc -I=. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./models.proto ./services.proto
 
+migrate:
+	cd migrations; GOOSE_DRIVER=postgres GOOSE_DBSTRING="user=postgres password=secret dbname=postgres sslmode=disable" goose up
+
 #docs:
 #	cd internal/app/shortener/
 #	swag init -g ./shortner.go

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"context"
+	"flag"
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/putalexey/goph-keeper/internal/client"
 	"github.com/putalexey/goph-keeper/internal/client/config"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -29,7 +32,15 @@ func main() {
 	}
 	defer logclose()
 
-	logger.Info("goph-keeper client")
+	fmt.Printf("goph-keeper client v%s\n", buildVersion)
+
+	c, err := client.NewClient(context.Background(), logger, conf)
+	if err != nil {
+		log.Fatalln("Failed to create logger", err)
+	}
+	defer c.Close()
+
+	c.ProcessCommand(context.Background(), flag.Args())
 }
 
 func checkArgs() bool {

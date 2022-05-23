@@ -28,6 +28,7 @@ type GKServerClient interface {
 	UpdateRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	DeleteRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
 	GetUpdates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
+	Ping(ctx context.Context, in *PingPong, opts ...grpc.CallOption) (*PingPong, error)
 }
 
 type gKServerClient struct {
@@ -92,6 +93,15 @@ func (c *gKServerClient) GetUpdates(ctx context.Context, in *Empty, opts ...grpc
 	return out, nil
 }
 
+func (c *gKServerClient) Ping(ctx context.Context, in *PingPong, opts ...grpc.CallOption) (*PingPong, error) {
+	out := new(PingPong)
+	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/Ping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GKServerServer is the server API for GKServer service.
 // All implementations must embed UnimplementedGKServerServer
 // for forward compatibility
@@ -102,6 +112,7 @@ type GKServerServer interface {
 	UpdateRecord(context.Context, *Empty) (*Empty, error)
 	DeleteRecord(context.Context, *Empty) (*Empty, error)
 	GetUpdates(context.Context, *Empty) (*Empty, error)
+	Ping(context.Context, *PingPong) (*PingPong, error)
 	mustEmbedUnimplementedGKServerServer()
 }
 
@@ -126,6 +137,9 @@ func (UnimplementedGKServerServer) DeleteRecord(context.Context, *Empty) (*Empty
 }
 func (UnimplementedGKServerServer) GetUpdates(context.Context, *Empty) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUpdates not implemented")
+}
+func (UnimplementedGKServerServer) Ping(context.Context, *PingPong) (*PingPong, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 func (UnimplementedGKServerServer) mustEmbedUnimplementedGKServerServer() {}
 
@@ -248,6 +262,24 @@ func _GKServer_GetUpdates_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GKServer_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PingPong)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GKServerServer).Ping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/gkeeper.services.GKServer/Ping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GKServerServer).Ping(ctx, req.(*PingPong))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GKServer_ServiceDesc is the grpc.ServiceDesc for GKServer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -278,6 +310,10 @@ var GKServer_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUpdates",
 			Handler:    _GKServer_GetUpdates_Handler,
+		},
+		{
+			MethodName: "Ping",
+			Handler:    _GKServer_Ping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -25,6 +25,7 @@ func NewDBConnection(databaseDSN string) (*sql.DB, error) {
 
 type StoragesContainer struct {
 	UserStorage   UserStorager
+	AuthStorage   AuthStorager
 	RecordStorage RecordStorager
 	EventStorage  EventStorager
 }
@@ -35,6 +36,12 @@ type UserStorager interface {
 	FindByLogin(ctx context.Context, login string) (*models.User, error)
 	Update(ctx context.Context, user *models.User) error
 	Delete(ctx context.Context, user *models.User) error
+}
+
+type AuthStorager interface {
+	GenerateForUser(ctx context.Context, user *models.User) (*models.Auth, error)
+	FindByToken(ctx context.Context, token string) (*models.Auth, error)
+	FindByUserUUID(ctx context.Context, userUuid string) ([]models.Auth, error)
 }
 
 type RecordStorager interface {

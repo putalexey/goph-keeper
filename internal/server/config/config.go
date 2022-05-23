@@ -7,15 +7,17 @@ import (
 	"os"
 )
 
+const DEFAULT_CONFIG_FILE = "gk-server.json"
+
 type ServerConfig struct {
 	// local address and port server will listen connections on
 	Address string `env:"SERVER_ADDRESS" json:"server_address"`
 	// path to logfile, leave empty to log to console
 	LogfilePath string `env:"LOGFILE_PATH" json:"logfile_path"`
 	// database DSN connection string
-	DatabaseDSN string `env:"DATABASE_URI"`
+	DatabaseDSN string `env:"DATABASE_URI" json:"database"`
 	// path to migrations dir
-	MigrationsDir string `env:"DATABASE_MIGRATIONS" envDefault:"migrations"`
+	MigrationsDir string `env:"DATABASE_MIGRATIONS" envDefault:"migrations" json:"migrations"`
 }
 
 type ConfigFile struct {
@@ -30,7 +32,7 @@ type ConfigFile struct {
 func Parse() (*ServerConfig, error) {
 	var err error
 	cfg := &ServerConfig{
-		Address:     ":8080",
+		Address:     ":3030",
 		LogfilePath: "",
 	}
 
@@ -39,9 +41,15 @@ func Parse() (*ServerConfig, error) {
 	if file, ok := argFlags["Config"]; ok {
 		configFile = file
 	}
+
 	if configFile != "" {
 		err = parseConfigFile(cfg, configFile)
 		if err != nil {
+			return nil, err
+		}
+	} else {
+		err = parseConfigFile(cfg, DEFAULT_CONFIG_FILE)
+		if err != nil && !os.IsNotExist(err) {
 			return nil, err
 		}
 	}

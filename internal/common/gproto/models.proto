@@ -47,4 +47,8 @@ message Event {
   bytes Data = 6;
 }
 
+message PingPong {
+  string message = 1;
+}
+
 message Empty {}

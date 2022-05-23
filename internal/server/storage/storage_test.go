@@ -242,3 +242,10 @@ func TestDBStorage(t *testing.T) {
 		require.Error(t, err, "user must be deleted by previous request")
 	})
 }
+
+func Test_generateToken(t *testing.T) {
+	t1 := generateToken()
+	t2 := generateToken()
+	assert.NotEqual(t, t1, t2)
+	fmt.Println(t1, t2)
+}

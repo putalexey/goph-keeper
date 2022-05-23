@@ -8,19 +8,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-func NewGopherGRPCClient(ctx context.Context, logger *zap.SugaredLogger, clientConfig *config.ClientConfig) proto.GKServerClient {
+func NewGopherGRPCClient(ctx context.Context, logger *zap.SugaredLogger, clientConfig *config.ClientConfig) (proto.GKServerClient, func(), error) {
 	conn, err := grpc.DialContext(ctx, clientConfig.ServerHost, grpc.WithInsecure())
 	if err != nil {
-		logger.Fatal(err)
+		return nil, nil, err
 	}
 
-	defer func(conn *grpc.ClientConn) {
+	client := proto.NewGKServerClient(conn)
+	return client, func() {
 		err := conn.Close()
 		if err != nil {
 			logger.Error(err)
 		}
-	}(conn)
-
-	client := proto.NewGKServerClient(conn)
-	return client
+	}, nil
 }
