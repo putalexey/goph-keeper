@@ -4,7 +4,7 @@
 // - protoc             v3.19.1
 // source: services.proto
 
-package grpc
+package gproto
 
 import (
 	context "context"

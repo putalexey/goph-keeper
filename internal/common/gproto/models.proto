@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/putalexey/goph-keeper/internal/common/grpc";
+option go_package = "github.com/putalexey/goph-keeper/internal/common/gproto";
 
 package gkeeper.models;
 
