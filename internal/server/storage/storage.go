@@ -4,6 +4,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	_ "github.com/jackc/pgx/stdlib"
 	"github.com/putalexey/goph-keeper/internal/common/models"
 	"time"
 )
@@ -20,6 +21,12 @@ func NewDBConnection(databaseDSN string) (*sql.DB, error) {
 	db.SetConnMaxLifetime(2 * time.Minute)
 
 	return db, db.Ping()
+}
+
+type StoragesContainer struct {
+	UserStorage   UserStorager
+	RecordStorage RecordStorager
+	EventStorage  EventStorager
 }
 
 type UserStorager interface {

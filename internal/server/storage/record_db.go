@@ -15,6 +15,10 @@ type RecordDBStorage struct {
 	db *sql.DB
 }
 
+func NewRecordDBStorage(db *sql.DB) *RecordDBStorage {
+	return &RecordDBStorage{db: db}
+}
+
 var recordAllFieldsSQL = `"uuid", "user_uuid", "name", "type", "data", "comment", "created_at", "updated_at", "deleted_at"`
 
 func (s *RecordDBStorage) Create(ctx context.Context, record *models.Record) error {

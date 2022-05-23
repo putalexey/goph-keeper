@@ -15,6 +15,10 @@ type UserDBStorage struct {
 	db *sql.DB
 }
 
+func NewUserDBStorage(db *sql.DB) *UserDBStorage {
+	return &UserDBStorage{db: db}
+}
+
 func (s *UserDBStorage) Create(ctx context.Context, user *models.User) error {
 	insertSQL := fmt.Sprintf(`INSERT INTO "%s" ("uuid", "login", "password") VALUES ($1, $2, $3)`, usersTableName)
 	_, err := s.db.ExecContext(ctx, insertSQL, user.UUID, user.Login, user.Password)

@@ -16,6 +16,10 @@ type EventDBStorage struct {
 	db *sql.DB
 }
 
+func NewEventStorager(db *sql.DB) *EventDBStorage {
+	return &EventDBStorage{db: db}
+}
+
 var eventAllFieldsSQL = `"uuid", "user_uuid", "record_uuid", "date", "action", "data"`
 
 func (s *EventDBStorage) Create(ctx context.Context, event *models.Event) error {
