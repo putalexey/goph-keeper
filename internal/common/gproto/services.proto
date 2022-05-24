@@ -7,11 +7,11 @@ package gkeeper.services;
 import "models.proto";
 
 service GKServer {
-  rpc Register(models.Empty) returns (models.Empty);
-  rpc Authorize(models.Empty) returns (models.Empty);
-  rpc CreateRecord(models.Empty) returns (models.Empty);
-  rpc UpdateRecord(models.Empty) returns (models.Empty);
-  rpc DeleteRecord(models.Empty) returns (models.Empty);
-  rpc GetUpdates(models.Empty) returns (models.Empty);
+  rpc Register(models.RegisterRequest) returns (models.RegisterResponse);
+  rpc Authorize(models.AuthorizeRequest) returns (models.AuthorizeResponse);
+  rpc CreateRecord(models.CreateRecordRequest) returns (models.CreateRecordResponse);
+  rpc UpdateRecord(models.UpdateRecordRequest) returns (models.UpdateRecordResponse);
+  rpc DeleteRecord(models.DeleteRecordRequest) returns (models.Empty);
+  rpc GetUpdates(models.GetUpdatesRequest) returns (models.GetUpdatesResponse);
   rpc Ping(models.PingPong) returns (models.PingPong);
 }

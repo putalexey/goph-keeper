@@ -22,12 +22,12 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GKServerClient interface {
-	Register(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	Authorize(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	CreateRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	UpdateRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	DeleteRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
-	GetUpdates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	Authorize(ctx context.Context, in *AuthorizeRequest, opts ...grpc.CallOption) (*AuthorizeResponse, error)
+	CreateRecord(ctx context.Context, in *CreateRecordRequest, opts ...grpc.CallOption) (*CreateRecordResponse, error)
+	UpdateRecord(ctx context.Context, in *UpdateRecordRequest, opts ...grpc.CallOption) (*UpdateRecordResponse, error)
+	DeleteRecord(ctx context.Context, in *DeleteRecordRequest, opts ...grpc.CallOption) (*Empty, error)
+	GetUpdates(ctx context.Context, in *GetUpdatesRequest, opts ...grpc.CallOption) (*GetUpdatesResponse, error)
 	Ping(ctx context.Context, in *PingPong, opts ...grpc.CallOption) (*PingPong, error)
 }
 
@@ -39,8 +39,8 @@ func NewGKServerClient(cc grpc.ClientConnInterface) GKServerClient {
 	return &gKServerClient{cc}
 }
 
-func (c *gKServerClient) Register(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *gKServerClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
+	out := new(RegisterResponse)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/Register", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -48,8 +48,8 @@ func (c *gKServerClient) Register(ctx context.Context, in *Empty, opts ...grpc.C
 	return out, nil
 }
 
-func (c *gKServerClient) Authorize(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *gKServerClient) Authorize(ctx context.Context, in *AuthorizeRequest, opts ...grpc.CallOption) (*AuthorizeResponse, error) {
+	out := new(AuthorizeResponse)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/Authorize", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -57,8 +57,8 @@ func (c *gKServerClient) Authorize(ctx context.Context, in *Empty, opts ...grpc.
 	return out, nil
 }
 
-func (c *gKServerClient) CreateRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *gKServerClient) CreateRecord(ctx context.Context, in *CreateRecordRequest, opts ...grpc.CallOption) (*CreateRecordResponse, error) {
+	out := new(CreateRecordResponse)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/CreateRecord", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -66,8 +66,8 @@ func (c *gKServerClient) CreateRecord(ctx context.Context, in *Empty, opts ...gr
 	return out, nil
 }
 
-func (c *gKServerClient) UpdateRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *gKServerClient) UpdateRecord(ctx context.Context, in *UpdateRecordRequest, opts ...grpc.CallOption) (*UpdateRecordResponse, error) {
+	out := new(UpdateRecordResponse)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/UpdateRecord", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (c *gKServerClient) UpdateRecord(ctx context.Context, in *Empty, opts ...gr
 	return out, nil
 }
 
-func (c *gKServerClient) DeleteRecord(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+func (c *gKServerClient) DeleteRecord(ctx context.Context, in *DeleteRecordRequest, opts ...grpc.CallOption) (*Empty, error) {
 	out := new(Empty)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/DeleteRecord", in, out, opts...)
 	if err != nil {
@@ -84,8 +84,8 @@ func (c *gKServerClient) DeleteRecord(ctx context.Context, in *Empty, opts ...gr
 	return out, nil
 }
 
-func (c *gKServerClient) GetUpdates(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
-	out := new(Empty)
+func (c *gKServerClient) GetUpdates(ctx context.Context, in *GetUpdatesRequest, opts ...grpc.CallOption) (*GetUpdatesResponse, error) {
+	out := new(GetUpdatesResponse)
 	err := c.cc.Invoke(ctx, "/gkeeper.services.GKServer/GetUpdates", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -106,12 +106,12 @@ func (c *gKServerClient) Ping(ctx context.Context, in *PingPong, opts ...grpc.Ca
 // All implementations must embed UnimplementedGKServerServer
 // for forward compatibility
 type GKServerServer interface {
-	Register(context.Context, *Empty) (*Empty, error)
-	Authorize(context.Context, *Empty) (*Empty, error)
-	CreateRecord(context.Context, *Empty) (*Empty, error)
-	UpdateRecord(context.Context, *Empty) (*Empty, error)
-	DeleteRecord(context.Context, *Empty) (*Empty, error)
-	GetUpdates(context.Context, *Empty) (*Empty, error)
+	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	Authorize(context.Context, *AuthorizeRequest) (*AuthorizeResponse, error)
+	CreateRecord(context.Context, *CreateRecordRequest) (*CreateRecordResponse, error)
+	UpdateRecord(context.Context, *UpdateRecordRequest) (*UpdateRecordResponse, error)
+	DeleteRecord(context.Context, *DeleteRecordRequest) (*Empty, error)
+	GetUpdates(context.Context, *GetUpdatesRequest) (*GetUpdatesResponse, error)
 	Ping(context.Context, *PingPong) (*PingPong, error)
 	mustEmbedUnimplementedGKServerServer()
 }
@@ -120,22 +120,22 @@ type GKServerServer interface {
 type UnimplementedGKServerServer struct {
 }
 
-func (UnimplementedGKServerServer) Register(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedGKServerServer) Authorize(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) Authorize(context.Context, *AuthorizeRequest) (*AuthorizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
 }
-func (UnimplementedGKServerServer) CreateRecord(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) CreateRecord(context.Context, *CreateRecordRequest) (*CreateRecordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateRecord not implemented")
 }
-func (UnimplementedGKServerServer) UpdateRecord(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) UpdateRecord(context.Context, *UpdateRecordRequest) (*UpdateRecordResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRecord not implemented")
 }
-func (UnimplementedGKServerServer) DeleteRecord(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) DeleteRecord(context.Context, *DeleteRecordRequest) (*Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteRecord not implemented")
 }
-func (UnimplementedGKServerServer) GetUpdates(context.Context, *Empty) (*Empty, error) {
+func (UnimplementedGKServerServer) GetUpdates(context.Context, *GetUpdatesRequest) (*GetUpdatesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUpdates not implemented")
 }
 func (UnimplementedGKServerServer) Ping(context.Context, *PingPong) (*PingPong, error) {
@@ -155,7 +155,7 @@ func RegisterGKServerServer(s grpc.ServiceRegistrar, srv GKServerServer) {
 }
 
 func _GKServer_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -167,13 +167,13 @@ func _GKServer_Register_Handler(srv interface{}, ctx context.Context, dec func(i
 		FullMethod: "/gkeeper.services.GKServer/Register",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).Register(ctx, req.(*Empty))
+		return srv.(GKServerServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GKServer_Authorize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(AuthorizeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -185,13 +185,13 @@ func _GKServer_Authorize_Handler(srv interface{}, ctx context.Context, dec func(
 		FullMethod: "/gkeeper.services.GKServer/Authorize",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).Authorize(ctx, req.(*Empty))
+		return srv.(GKServerServer).Authorize(ctx, req.(*AuthorizeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GKServer_CreateRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(CreateRecordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -203,13 +203,13 @@ func _GKServer_CreateRecord_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/gkeeper.services.GKServer/CreateRecord",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).CreateRecord(ctx, req.(*Empty))
+		return srv.(GKServerServer).CreateRecord(ctx, req.(*CreateRecordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GKServer_UpdateRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(UpdateRecordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -221,13 +221,13 @@ func _GKServer_UpdateRecord_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/gkeeper.services.GKServer/UpdateRecord",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).UpdateRecord(ctx, req.(*Empty))
+		return srv.(GKServerServer).UpdateRecord(ctx, req.(*UpdateRecordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GKServer_DeleteRecord_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(DeleteRecordRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -239,13 +239,13 @@ func _GKServer_DeleteRecord_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: "/gkeeper.services.GKServer/DeleteRecord",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).DeleteRecord(ctx, req.(*Empty))
+		return srv.(GKServerServer).DeleteRecord(ctx, req.(*DeleteRecordRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 func _GKServer_GetUpdates_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Empty)
+	in := new(GetUpdatesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -257,7 +257,7 @@ func _GKServer_GetUpdates_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/gkeeper.services.GKServer/GetUpdates",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GKServerServer).GetUpdates(ctx, req.(*Empty))
+		return srv.(GKServerServer).GetUpdates(ctx, req.(*GetUpdatesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
