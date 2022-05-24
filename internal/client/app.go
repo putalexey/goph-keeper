@@ -16,6 +16,7 @@ type Client struct {
 	config   *config.ClientConfig
 	Close    func()
 	Commands []commands.Command
+	Params   *Params
 }
 
 func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.ClientConfig) (*Client, error) {
@@ -28,6 +29,7 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 		logger:         logger,
 		config:         config,
 		Close:          closeFn,
+		Params:         &Params{},
 	}
 	app.Commands = []commands.Command{
 		commands.NewPingCommand(logger, app),
@@ -37,6 +39,19 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 }
 
 func (c *Client) ProcessCommand(ctx context.Context, args []string) {
+	err := c.beforeCommand()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.logger.Error(err)
+		return
+	}
+	defer func() {
+		err := c.afterCommand()
+		if err != nil {
+			fmt.Println(err.Error())
+			c.logger.Error(err)
+		}
+	}()
 	if len(args) == 0 {
 		fmt.Println("enter command")
 		return
@@ -51,15 +66,23 @@ func (c *Client) ProcessCommand(ctx context.Context, args []string) {
 			return
 		}
 	}
-	//if args[0] == "ping" {
-	//	response, err := c.Ping(context.Background(), &proto.PingPong{Message: "ping"})
-	//	if err != nil {
-	//		fmt.Println(err.Error())
-	//		c.logger.Error(err)
-	//		return
-	//	}
-	//	fmt.Println(response.Message)
-	//	return
-	//}
 	fmt.Println("Unknown command: ", args[0])
+}
+
+func (c *Client) beforeCommand() error {
+	params, err := LoadParams(c.config.StoragePath)
+	if err != nil {
+		return err
+	}
+	c.Params = params
+
+	return nil
+}
+
+func (c *Client) afterCommand() error {
+	err := SaveParams(c.Params, c.config.StoragePath)
+	if err != nil {
+		return err
+	}
+	return nil
 }
