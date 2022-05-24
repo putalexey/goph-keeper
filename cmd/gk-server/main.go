@@ -7,10 +7,10 @@ import (
 	"github.com/putalexey/goph-keeper/internal/server"
 	"github.com/putalexey/goph-keeper/internal/server/config"
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"sync"
 	"syscall"
 )
@@ -72,25 +72,29 @@ func checkArgs() bool {
 // makeLogger creates configured logger and returns zap.SugaredLogger and func that will sync and close logger
 func makeLogger(conf *config.ServerConfig) (*zap.SugaredLogger, func(), error) {
 	var err error
-	var logwriter zapcore.WriteSyncer
-	logclose := func() {}
+	outputPaths := []string{"stderr"}
+	errorOutputPaths := []string{"stderr"}
 
 	if conf.LogfilePath != "" {
-		logwriter, logclose, err = zap.Open(conf.LogfilePath)
+		dir := path.Dir(conf.LogfilePath)
+		err = os.MkdirAll(dir, 0700)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "Failed to open logfile for writing")
+			return nil, nil, errors.Wrap(err, "Failed to create folder for logfile")
 		}
+
+		outputPaths = []string{conf.LogfilePath}
+		errorOutputPaths = []string{conf.LogfilePath}
 	}
 
-	opts := make([]zap.Option, 0)
-	if logwriter != nil {
-		opts = append(opts, zap.ErrorOutput(logwriter))
-	}
+	//cfg := zap.NewProductionConfig()
+	cfg := zap.NewDevelopmentConfig()
+	cfg.OutputPaths = outputPaths
+	cfg.ErrorOutputPaths = errorOutputPaths
+
 	//baseLogger, err := zap.NewProduction()
-	baseLogger, err := zap.NewDevelopment(opts...)
+	baseLogger, err := cfg.Build()
 	return baseLogger.Sugar(), func() {
 		//goland:noinspection GoUnhandledErrorResult
 		baseLogger.Sync() // flushes buffer, if any
-		logclose()
 	}, err
 }
