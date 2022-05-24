@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/jackc/pgx/stdlib"
+	"github.com/pkg/errors"
 	"github.com/putalexey/goph-keeper/internal/common/models"
 	"time"
 )
@@ -22,6 +23,9 @@ func NewDBConnection(databaseDSN string) (*sql.DB, error) {
 
 	return db, db.Ping()
 }
+
+//ErrNotFound error returned on "not found" error from underlying storage driver
+var ErrNotFound = errors.New("not found")
 
 type StoragesContainer struct {
 	UserStorage   UserStorager

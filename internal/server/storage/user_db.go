@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/putalexey/goph-keeper/internal/common/models"
 )
 
@@ -20,6 +22,7 @@ func NewUserDBStorage(db *sql.DB) *UserDBStorage {
 }
 
 func (s *UserDBStorage) Create(ctx context.Context, user *models.User) error {
+	user.UUID = uuid.NewString()
 	insertSQL := fmt.Sprintf(`INSERT INTO "%s" ("uuid", "login", "password") VALUES ($1, $2, $3)`, usersTableName)
 	_, err := s.db.ExecContext(ctx, insertSQL, user.UUID, user.Login, user.Password)
 	return err
@@ -44,6 +47,9 @@ func (s *UserDBStorage) FindByLogin(ctx context.Context, login string) (*models.
 	row := s.db.QueryRowContext(ctx, selectSQL, login)
 	err := row.Scan(&user.UUID, &user.Login, &user.Password)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 	return user, nil
