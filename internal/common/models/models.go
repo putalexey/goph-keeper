@@ -48,3 +48,13 @@ type Event struct {
 	Action     string    `json:"action"`
 	Data       []byte    `json:"data"`
 }
+
+type FileDataType struct {
+	Filename string
+	Contents []byte
+}
+
+type LoginDataType struct {
+	Login    string
+	Password string
+}

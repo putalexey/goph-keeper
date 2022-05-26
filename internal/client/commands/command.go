@@ -1,6 +1,8 @@
 package commands
 
-import "context"
+import (
+	"context"
+)
 
 type Command interface {
 	GetName() string

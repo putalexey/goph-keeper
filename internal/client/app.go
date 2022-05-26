@@ -35,6 +35,7 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 	app.Commands = []commands.Command{
 		commands.NewPingCommand(logger, app),
 		commands.NewRegisterCommand(logger, app, app.Storage),
+		commands.NewAddCommand(logger, app, app.Storage),
 	}
 	return app, nil
 }
