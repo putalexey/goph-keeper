@@ -8,6 +8,9 @@ import (
 	"github.com/putalexey/goph-keeper/internal/common/utils/password"
 	"github.com/putalexey/goph-keeper/internal/server/storage"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"log"
 	"net"
 	"strings"
 )
@@ -59,14 +62,16 @@ func (s *GopherGRPCServer) Register(ctx context.Context, request *gproto.Registe
 	pass := strings.TrimSpace(request.Password)
 	passHash, err := password.PasswordHash(pass)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	_, err = s.storages.UserStorage.FindByLogin(ctx, login)
 	if err == nil {
-		return nil, errors.New("user already registered")
+		return nil, status.Error(codes.AlreadyExists, "user already registered")
 	} else if !errors.Is(err, storage.ErrNotFound) {
-		return nil, err
+		log.Println(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	user := &models.User{
 		Login:    login,
@@ -74,12 +79,14 @@ func (s *GopherGRPCServer) Register(ctx context.Context, request *gproto.Registe
 	}
 	err = s.storages.UserStorage.Create(ctx, user)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	auth, err := s.storages.AuthStorage.GenerateForUser(ctx, user)
 	if err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &gproto.RegisterResponse{

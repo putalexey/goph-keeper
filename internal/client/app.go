@@ -6,6 +6,7 @@ import (
 	"github.com/putalexey/goph-keeper/internal/client/commands"
 	"github.com/putalexey/goph-keeper/internal/client/config"
 	"github.com/putalexey/goph-keeper/internal/client/gproto"
+	"github.com/putalexey/goph-keeper/internal/client/storage"
 	proto "github.com/putalexey/goph-keeper/internal/common/gproto"
 	"go.uber.org/zap"
 )
@@ -16,7 +17,7 @@ type Client struct {
 	config   *config.ClientConfig
 	Close    func()
 	Commands []commands.Command
-	Params   *Params
+	Storage  storage.Storager
 }
 
 func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.ClientConfig) (*Client, error) {
@@ -29,11 +30,11 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 		logger:         logger,
 		config:         config,
 		Close:          closeFn,
-		Params:         &Params{},
+		Storage:        storage.NewJSONStorage(config.StoragePath),
 	}
 	app.Commands = []commands.Command{
 		commands.NewPingCommand(logger, app),
-		commands.NewRegisterCommand(logger, app),
+		commands.NewRegisterCommand(logger, app, app.Storage),
 	}
 	return app, nil
 }
@@ -70,17 +71,16 @@ func (c *Client) ProcessCommand(ctx context.Context, args []string) {
 }
 
 func (c *Client) beforeCommand() error {
-	params, err := LoadParams(c.config.StoragePath)
+	err := c.Storage.Load()
 	if err != nil {
 		return err
 	}
-	c.Params = params
 
 	return nil
 }
 
 func (c *Client) afterCommand() error {
-	err := SaveParams(c.Params, c.config.StoragePath)
+	err := c.Storage.Save()
 	if err != nil {
 		return err
 	}

@@ -38,7 +38,7 @@ func Parse() (*ClientConfig, error) {
 		LogfilePath = confDir + "/gk-client/gk-client.log"
 	}
 	cfg := &ClientConfig{
-		ServerHost:  "goph-keeper.putalexey.ru",
+		ServerHost:  "goph-keeper.putalexey.ru:3030",
 		StoragePath: StoragePath,
 		LogfilePath: LogfilePath,
 		//FileMode:    0600,
