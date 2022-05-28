@@ -215,8 +215,107 @@ func readRecordValueLogin(reader *bufio.Reader, args ...string) ([]byte, error) 
 }
 
 func readRecordValueBank(reader *bufio.Reader, args ...string) ([]byte, error) {
+	var (
+		err        error
+		cardNumber string
+		cardHolder string
+		expMonth   string
+		expYear    string
+		cvv        string
+	)
 
-	return []byte{}, nil
+	cardNumber, err = readCardNumber(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	cardHolder, err = readCardHolderName(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	expMonth, expYear, err = readCardExpiry(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	cvv, err = readCardCVV(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return models.EncodeBankCardDataType(&models.BankCardDataType{
+		Number:   cardNumber,
+		Holder:   cardHolder,
+		ExpMonth: expMonth,
+		ExpYear:  expYear,
+		CVV:      cvv,
+	})
+}
+
+func readCardHolderName(reader *bufio.Reader) (string, error) {
+	fmt.Print("Enter card holder name (can be empty): ")
+	cardHolder, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	cardHolder = strings.TrimSpace(cardHolder)
+	return cardHolder, nil
+}
+
+func readCardExpiry(reader *bufio.Reader) (string, string, error) {
+	var (
+		expMonth string
+		expYear  string
+	)
+
+	for {
+		fmt.Print("Enter card expiry month (1-12): ")
+		month, err := reader.ReadString('\n')
+		if err != nil {
+			return "", "", err
+		}
+		month = strings.TrimSpace(month)
+		nMonth, err := strconv.Atoi(month)
+
+		if err == nil && nMonth > 0 && nMonth <= 12 {
+			expMonth = month
+			break
+		}
+		fmt.Println("enter number between 1 and 12")
+	}
+
+	for {
+		fmt.Print("Enter card expiry year: ")
+		year, err := reader.ReadString('\n')
+		if err != nil {
+			return "", "", err
+		}
+		year = strings.TrimSpace(year)
+		if len(year) == 2 {
+			year = "20" + year
+		}
+		_, err = strconv.Atoi(year)
+
+		if err == nil {
+			expYear = year
+			break
+		}
+		fmt.Println(err)
+	}
+
+	return expMonth, expYear, nil
+}
+
+func readCardCVV(reader *bufio.Reader) (string, error) {
+
+	fmt.Print("Enter card cvv (leave blank if don't want to store it): ")
+	cvv, err := reader.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	cvv = strings.TrimSpace(cvv)
+	return cvv, nil
 }
 
 func validateName(name string) error {
@@ -270,5 +369,20 @@ func readRecordType(reader *bufio.Reader) (string, error) {
 		}
 
 		return storage.SupportedTypes[num-1], nil
+	}
+}
+
+func readCardNumber(reader *bufio.Reader) (string, error) {
+	for {
+		fmt.Print("Enter card number: ")
+		cardNumber, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		cardNumber = strings.TrimSpace(cardNumber)
+		if len(cardNumber) >= 15 {
+			return cardNumber, nil
+		}
+		fmt.Println("card number is too short")
 	}
 }

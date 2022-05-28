@@ -58,3 +58,11 @@ type LoginDataType struct {
 	Login    string
 	Password string
 }
+
+type BankCardDataType struct {
+	Number   string
+	Holder   string
+	ExpMonth string
+	ExpYear  string
+	CVV      string
+}
