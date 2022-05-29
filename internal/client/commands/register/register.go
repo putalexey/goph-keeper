@@ -46,16 +46,20 @@ func (c *Register) Handle(ctx context.Context, args []string) error {
 		}
 		login = strings.TrimSpace(login)
 	}
-	fmt.Print("Enter password: ")
-	password, err = term.ReadPassword(int(os.Stdin.Fd()))
-	if err != nil {
-		return err
-	}
-	fmt.Print("\n")
 
-	if len(password) < 4 {
-		fmt.Println("password is too short, minimum length is 4")
-		return nil
+	for {
+		fmt.Print("Enter password: ")
+		password, err = term.ReadPassword(int(os.Stdin.Fd()))
+		if err != nil {
+			return err
+		}
+		fmt.Print("\n")
+
+		if len(password) < 4 {
+			fmt.Println("password is too short, minimum length is 4")
+			continue
+		}
+		break
 	}
 
 	response, err := c.remote.Register(ctx, &gproto.RegisterRequest{
