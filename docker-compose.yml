@@ -7,6 +7,8 @@ services:
       - './:/root/gk-server/'
     working_dir: /root/gk-server/bin/
     entrypoint: /root/gk-server/bin/gk-server
+    ports:
+      - "3030:3030"
     environment:
       DATABASE_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres
     links:
