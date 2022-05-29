@@ -4,9 +4,9 @@ services:
     restart: 'unless-stopped'
     image: golang:1.18-alpine
     volumes:
-      - './bin/:/root/gk-server/'
-    working_dir: /root/gk-server/
-    entrypoint: /root/gk-server/gk-server
+      - './:/root/gk-server/'
+    working_dir: /root/gk-server/bin/
+    entrypoint: /root/gk-server/bin/gk-server
     environment:
       DATABASE_URI: postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/postgres
     links:
