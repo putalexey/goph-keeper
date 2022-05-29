@@ -57,9 +57,10 @@ func (c *Add) Handle(ctx context.Context, args []string) error {
 			return err
 		}
 	} else {
-		typeName = strings.TrimSpace(args[0])
-		if !slices.Contains(storage.SupportedTypes, typeName) {
-			errText := fmt.Sprintf("unknown record type (%s)\nRecord types\n", typeName)
+		t := strings.TrimSpace(args[0])
+		typeName, err = guessRecordType(t)
+		if err != nil {
+			errText := fmt.Sprintf("%s\nSupported record types:\n", err.Error())
 			for i, t := range storage.SupportedTypes {
 				errText += fmt.Sprintf("  [%d] %s\n", i+1, t)
 			}
@@ -466,19 +467,27 @@ func readRecordType(reader *bufio.Reader) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		t = strings.TrimSpace(t)
-		if slices.Contains(storage.SupportedTypes, t) {
-			return t, nil
-		}
-		num, err := strconv.Atoi(t)
+		typeName, err := guessRecordType(t)
 		if err != nil {
-			fmt.Printf("unknown record type (%s)\n", t)
+			fmt.Println(err.Error())
 			continue
 		}
-		if num < 1 || num > len(storage.SupportedTypes) {
-			continue
-		}
-
-		return storage.SupportedTypes[num-1], nil
+		return typeName, nil
 	}
+}
+
+func guessRecordType(t string) (string, error) {
+	t = strings.TrimSpace(t)
+	if slices.Contains(storage.SupportedTypes, t) {
+		return t, nil
+	}
+	num, err := strconv.Atoi(t)
+	if err != nil {
+		fmt.Printf("unknown record type (%s)", t)
+		return "", errors.New(fmt.Sprintf("unknown record type (%s)", t))
+	}
+	if num < 1 || num > len(storage.SupportedTypes) {
+		return "", errors.New(fmt.Sprintf("unknown record type (%s)", t))
+	}
+	return storage.SupportedTypes[num-1], nil
 }
