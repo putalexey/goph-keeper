@@ -155,13 +155,13 @@ func TestDBStorage(t *testing.T) {
 		})
 	}
 
-	// FindByUUID tests
+	// GetByUUID tests
 	t.Run("finds user by uuid", func(t *testing.T) {
 		s := &UserDBStorage{
 			db: sharedDB,
 		}
 		user, err := s.FindByUUID(context.Background(), users[0].UUID)
-		assert.NoError(t, err, "FindByUUID() error = %v, wantErr %v", err, false)
+		assert.NoError(t, err, "GetByUUID() error = %v, wantErr %v", err, false)
 		assert.Equal(t, users[0], user, "must be equal")
 	})
 
@@ -170,7 +170,7 @@ func TestDBStorage(t *testing.T) {
 			db: sharedDB,
 		}
 		_, err := s.FindByUUID(context.Background(), uuid.New().String())
-		assert.Error(t, err, "FindByUUID() error = %v, wantErr %v", err, true)
+		assert.Error(t, err, "GetByUUID() error = %v, wantErr %v", err, true)
 	})
 
 	// FindByLogin tests
@@ -205,7 +205,7 @@ func TestDBStorage(t *testing.T) {
 		assert.NoError(t, err, "Update() error = %v, wantErr %v", err, false)
 
 		updatedUser, err := s.FindByUUID(context.Background(), users[0].UUID)
-		assert.NoError(t, err, "FindByUUID() error = %v, wantErr %v", err, false)
+		assert.NoError(t, err, "GetByUUID() error = %v, wantErr %v", err, false)
 
 		assert.Equal(t, newUser.Login, updatedUser.Login, "received user must have same new Login value")
 		assert.NotEqual(t, users[0].Login, updatedUser.Login, "received user must have new Login value")

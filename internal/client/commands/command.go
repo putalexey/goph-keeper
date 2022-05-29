@@ -2,7 +2,10 @@ package commands
 
 import (
 	"context"
+	"errors"
 )
+
+var ErrNotAuthorized = errors.New("not authorized")
 
 type Command interface {
 	GetName() string

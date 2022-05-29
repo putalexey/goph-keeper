@@ -50,8 +50,9 @@ type AuthStorager interface {
 
 type RecordStorager interface {
 	Create(ctx context.Context, record *models.Record) error
-	FindByUUID(ctx context.Context, uuid string) (*models.Record, error)
+	GetByUUID(ctx context.Context, uuid string) (*models.Record, error)
 	FindByUserUUID(ctx context.Context, userUuid string) ([]models.Record, error)
+	GetByUserUUIDAndName(ctx context.Context, userUuid string, name string) (*models.Record, error)
 	Update(ctx context.Context, record *models.Record) error
 	Delete(ctx context.Context, record *models.Record) error
 }

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/putalexey/goph-keeper/internal/common/models"
@@ -53,6 +54,9 @@ func (s *AuthDBStorage) FindByToken(ctx context.Context, token string) (*models.
 	row := s.db.QueryRowContext(ctx, selectSQL, token)
 	err := row.Scan(&auth.UUID, &auth.UserUUID, &auth.Token, &auth.CreatedAt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
 		return nil, err
 	}
 	return auth, nil

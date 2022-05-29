@@ -34,11 +34,24 @@ type Record struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 }
 
+type RecordField int
+
 const (
-	ActionCreate = "create"
-	ActionUpdate = "update"
-	ActionDelete = "delete"
+	RecordFieldUnknown RecordField = iota
+	RecordFieldName
+	RecordFieldData
+	RecordFieldComment
 )
+
+func (d RecordField) String() string {
+	return [...]string{"Unknown", "Name", "Data", "Comment"}[d]
+}
+
+//const (
+//	ActionCreate = "create"
+//	ActionUpdate = "update"
+//	ActionDelete = "delete"
+//)
 
 type Event struct {
 	UUID       string    `json:"uuid"`

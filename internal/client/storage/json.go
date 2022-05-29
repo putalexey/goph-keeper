@@ -43,7 +43,7 @@ func (s *JSONStorage) Save() error {
 		return err
 	}
 
-	err = os.WriteFile(s.filepath, storageData, 0666)
+	err = os.WriteFile(s.filepath, storageData, 0664)
 	if err != nil {
 		return err
 	}

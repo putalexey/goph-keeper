@@ -46,7 +46,7 @@ func main() {
 	finished.Add(1)
 	go func() {
 		defer finished.Done()
-		err := server.Run(ctx, conf)
+		err := server.Run(ctx, logger, conf)
 		if err != nil {
 			logger.Error(err)
 		}

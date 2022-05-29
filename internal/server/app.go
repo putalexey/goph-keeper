@@ -7,11 +7,15 @@ import (
 	"github.com/putalexey/goph-keeper/internal/server/config"
 	"github.com/putalexey/goph-keeper/internal/server/interfaces"
 	"github.com/putalexey/goph-keeper/internal/server/storage"
+	"go.uber.org/zap"
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 )
 
-func Run(ctx context.Context, cfg *config.ServerConfig) error {
+func Run(ctx context.Context, logger *zap.SugaredLogger, cfg *config.ServerConfig) error {
+	rand.Seed(time.Now().UnixMicro())
 	db, err := storage.NewDBConnection(cfg.DatabaseDSN)
 	if err != nil {
 		return errors.Wrap(err, "cannot connect to DB")
@@ -21,7 +25,7 @@ func Run(ctx context.Context, cfg *config.ServerConfig) error {
 	}
 	initStorages(server)
 
-	grpcServer := interfaces.NewGopherGRPCServer(ctx, server.StoragesContainer, cfg.Address)
+	grpcServer := interfaces.NewGopherGRPCServer(ctx, logger, server.StoragesContainer, cfg.Address)
 
 	wg := sync.WaitGroup{}
 

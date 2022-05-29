@@ -27,23 +27,21 @@ message User {
 
 message Record {
   string UUID = 1;
-  string UserUUID = 2;
-  string Name = 3;
-  string Type = 4;
-  bytes Data = 5;
-  string Comment = 6;
-  google.protobuf.Timestamp CreatedAt = 7;
-  google.protobuf.Timestamp UpdatedAt = 8;
-  google.protobuf.Timestamp DeletedAt = 9;
+  string Name = 2;
+  string Type = 3;
+  bytes Data = 4;
+  string Comment = 5;
+  google.protobuf.Timestamp CreatedAt = 6;
+  google.protobuf.Timestamp UpdatedAt = 7;
+  google.protobuf.Timestamp DeletedAt = 8;
 }
 
 message Event {
   string UUID = 1;
-  string UserUUID = 2;
-  string RecordUUID = 3;
-  google.protobuf.Timestamp Date = 4;
-  string Action = 5;
-  bytes Data = 6;
+  string RecordUUID = 2;
+  google.protobuf.Timestamp Date = 3;
+  string Action = 4;
+  bytes Data = 5;
 }
 
 message PingPong {
@@ -78,15 +76,20 @@ message CreateRecordRequest {
 message CreateRecordResponse {
   Record Record = 1;
 }
-message UpdateRecordRequest {
+enum Field {
+  Unknown = 0;
+  Name = 1;
+  Data = 2;
+  Comment = 3;
+}
+
+message UpdateRecordFieldsRequest {
   string AuthToken = 1;
   string UUID = 2;
-  string Name = 3;
-  string Type = 4;
-  bytes Data = 5;
-  string Comment = 6;
+  Field Field = 3;
+  bytes Value = 4;
 }
-message UpdateRecordResponse {
+message UpdateRecordFieldsResponse {
   Record Record = 1;
 }
 message DeleteRecordRequest {
@@ -98,4 +101,29 @@ message GetUpdatesRequest {
 }
 message GetUpdatesResponse {
   repeated Event Events = 1;
+}
+
+message GetRecordRequest {
+  string AuthToken = 1;
+  string Name = 2;
+}
+
+message GetRecordResponse {
+  Record Record = 1;
+}
+
+message GetRecordsRequest {
+  string AuthToken = 1;
+}
+
+message RecordListItem {
+  string UUID = 1;
+  string Name = 2;
+  string Type = 3;
+  google.protobuf.Timestamp CreatedAt = 4;
+  google.protobuf.Timestamp UpdatedAt = 5;
+}
+
+message GetRecordsResponse {
+  repeated RecordListItem Records = 1;
 }
