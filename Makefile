@@ -15,7 +15,7 @@ build_client:
 	go build ${LDFLAGS} -o bin/gk-client ./cmd/gk-client
 
 build_server:
-	go build ${LDFLAGS} -o bin/gk-server ./cmd/gk-server
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build ${LDFLAGS} -o bin/gk-server ./cmd/gk-server
 
 proto:
 	cd internal/common/gproto; protoc -I=. --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative ./models.proto ./services.proto
