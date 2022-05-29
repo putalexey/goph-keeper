@@ -1,4 +1,4 @@
-package commands
+package add
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/putalexey/goph-keeper/internal/client/storage"
-	proto "github.com/putalexey/goph-keeper/internal/common/gproto"
+	"github.com/putalexey/goph-keeper/internal/common/gproto"
 	"github.com/putalexey/goph-keeper/internal/common/models"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
@@ -17,31 +17,30 @@ import (
 	"strings"
 )
 
-type AddCommand struct {
+type Add struct {
 	logger  *zap.SugaredLogger
-	remote  proto.GKServerClient
+	remote  gproto.GKServerClient
 	storage storage.Storager
 }
 
-func NewAddCommand(logger *zap.SugaredLogger, remote proto.GKServerClient, storage storage.Storager) *AddCommand {
-	return &AddCommand{logger: logger, remote: remote, storage: storage}
+func NewAddCommand(logger *zap.SugaredLogger, remote gproto.GKServerClient, storage storage.Storager) *Add {
+	return &Add{logger: logger, remote: remote, storage: storage}
 }
 
-func (c *AddCommand) GetName() string {
+func (c *Add) GetName() string {
 	return "add"
 }
 
-func (c *AddCommand) GetHelp() string {
+func (c *Add) GetHelp() string {
 	return `add new record syntax:
 gk-client add
 gk-client add text [record_name] [text] [comment]
 gk-client add file [record_name] [filepath] [comment]
 gk-client add login [record_name] [login] [password] [comment]
-gk-client add card [record_name]
-`
+gk-client add card [record_name]`
 }
 
-func (c *AddCommand) Handle(ctx context.Context, args []string) error {
+func (c *Add) Handle(ctx context.Context, args []string) error {
 	var (
 		err      error
 		name     string
@@ -92,7 +91,7 @@ func (c *AddCommand) Handle(ctx context.Context, args []string) error {
 
 	fmt.Printf("adding record \"%s\" with type \"%s\"\n", name, typeName)
 
-	_, err = c.remote.CreateRecord(ctx, &proto.CreateRecordRequest{
+	_, err = c.remote.CreateRecord(ctx, &gproto.CreateRecordRequest{
 		AuthToken: c.storage.GetToken(),
 		Name:      name,
 		Type:      typeName,

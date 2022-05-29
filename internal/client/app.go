@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/putalexey/goph-keeper/internal/client/commands"
+	"github.com/putalexey/goph-keeper/internal/client/commands/add"
+	"github.com/putalexey/goph-keeper/internal/client/commands/ping"
+	"github.com/putalexey/goph-keeper/internal/client/commands/register"
 	"github.com/putalexey/goph-keeper/internal/client/config"
 	"github.com/putalexey/goph-keeper/internal/client/gproto"
 	"github.com/putalexey/goph-keeper/internal/client/storage"
@@ -33,9 +36,9 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 		Storage:        storage.NewJSONStorage(config.StoragePath),
 	}
 	app.Commands = []commands.Command{
-		commands.NewPingCommand(logger, app),
-		commands.NewRegisterCommand(logger, app, app.Storage),
-		commands.NewAddCommand(logger, app, app.Storage),
+		ping.NewPingCommand(logger, app),
+		register.NewRegisterCommand(logger, app, app.Storage),
+		add.NewAddCommand(logger, app, app.Storage),
 	}
 	return app, nil
 }

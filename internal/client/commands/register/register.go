@@ -1,4 +1,4 @@
-package commands
+package register
 
 import (
 	"bufio"
@@ -6,28 +6,28 @@ import (
 	"errors"
 	"fmt"
 	"github.com/putalexey/goph-keeper/internal/client/storage"
-	proto "github.com/putalexey/goph-keeper/internal/common/gproto"
+	"github.com/putalexey/goph-keeper/internal/common/gproto"
 	"go.uber.org/zap"
 	"golang.org/x/term"
 	"os"
 	"strings"
 )
 
-type RegisterCommand struct {
+type Register struct {
 	logger  *zap.SugaredLogger
-	remote  proto.GKServerClient
+	remote  gproto.GKServerClient
 	storage storage.Storager
 }
 
-func NewRegisterCommand(logger *zap.SugaredLogger, remote proto.GKServerClient, storage storage.Storager) *RegisterCommand {
-	return &RegisterCommand{logger: logger, remote: remote, storage: storage}
+func NewRegisterCommand(logger *zap.SugaredLogger, remote gproto.GKServerClient, storage storage.Storager) *Register {
+	return &Register{logger: logger, remote: remote, storage: storage}
 }
 
-func (c *RegisterCommand) GetName() string {
+func (c *Register) GetName() string {
 	return "register"
 }
 
-func (c *RegisterCommand) Handle(ctx context.Context, args []string) error {
+func (c *Register) Handle(ctx context.Context, args []string) error {
 	var (
 		err      error
 		login    string
@@ -58,7 +58,7 @@ func (c *RegisterCommand) Handle(ctx context.Context, args []string) error {
 		return nil
 	}
 
-	response, err := c.remote.Register(ctx, &proto.RegisterRequest{
+	response, err := c.remote.Register(ctx, &gproto.RegisterRequest{
 		Login:    login,
 		Password: string(password),
 	})
