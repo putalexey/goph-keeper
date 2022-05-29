@@ -1,3 +1,5 @@
+/.env
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -22,4 +24,6 @@ vendor/
 .idea
 .vscode
 
-/bin/
+/bin/*
+!/bin/gk-server.json.example
+!/bin/gk-client.json.example
