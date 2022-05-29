@@ -22,7 +22,9 @@ func NewUserDBStorage(db *sql.DB) *UserDBStorage {
 }
 
 func (s *UserDBStorage) Create(ctx context.Context, user *models.User) error {
-	user.UUID = uuid.NewString()
+	if len(user.UUID) == 0 {
+		user.UUID = uuid.NewString()
+	}
 	insertSQL := fmt.Sprintf(`INSERT INTO "%s" ("uuid", "login", "password") VALUES ($1, $2, $3)`, usersTableName)
 	_, err := s.db.ExecContext(ctx, insertSQL, user.UUID, user.Login, user.Password)
 	return err
