@@ -31,15 +31,44 @@ func (c *AddCommand) GetName() string {
 	return "add"
 }
 
+func (c *AddCommand) GetHelp() string {
+	return `add new record syntax:
+gk-client add
+gk-client add text [record_name] [text] [comment]
+gk-client add file [record_name] [filepath] [comment]
+gk-client add login [record_name] [login] [password] [comment]
+gk-client add card [record_name]
+`
+}
+
 func (c *AddCommand) Handle(ctx context.Context, args []string) error {
 	var (
 		err      error
 		name     string
 		typeName string
 		data     []byte
+		comment  string
 	)
 
 	reader := bufio.NewReader(os.Stdin)
+
+	if len(args) < 1 {
+		typeName, err = readRecordType(reader)
+		if err != nil {
+			return err
+		}
+	} else {
+		typeName = strings.TrimSpace(args[0])
+		if !slices.Contains(storage.SupportedTypes, typeName) {
+			errText := fmt.Sprintf("unknown record type (%s)\nRecord types\n", typeName)
+			for i, t := range storage.SupportedTypes {
+				errText += fmt.Sprintf("  [%d] %s\n", i+1, t)
+			}
+			return errors.New(errText)
+		}
+		args = args[1:]
+	}
+
 	if len(args) < 1 {
 		name, err = readRecordName(reader)
 		if err != nil {
@@ -52,32 +81,27 @@ func (c *AddCommand) Handle(ctx context.Context, args []string) error {
 		}
 	}
 
-	if len(args) < 2 {
-		typeName, err = readRecordType(reader)
-		if err != nil {
-			return err
-		}
+	if len(args) < 1 {
+		data, comment, err = readRecordValue(typeName, reader)
 	} else {
-		typeName = strings.TrimSpace(args[1])
-		if !slices.Contains(storage.SupportedTypes, typeName) {
-			errText := fmt.Sprintf("unknown record type (%s)\nRecord typesn\n", typeName)
-			for i, t := range storage.SupportedTypes {
-				errText += fmt.Sprintf("  [%d] %s\n", i+1, t)
-			}
-			return errors.New(errText)
-		}
-	}
-
-	if len(args) < 3 {
-		data, err = readRecordValue(typeName, reader)
-	} else {
-		data, err = readRecordValue(typeName, reader, args[2:]...)
+		data, comment, err = readRecordValue(typeName, reader, args...)
 	}
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("adding record \"%s\" with type \"%s\" and data (%v)\n", name, typeName, string(data))
+	fmt.Printf("adding record \"%s\" with type \"%s\"\n", name, typeName)
+
+	_, err = c.remote.CreateRecord(ctx, &proto.CreateRecordRequest{
+		AuthToken: c.storage.GetToken(),
+		Name:      name,
+		Type:      typeName,
+		Data:      data,
+		Comment:   comment,
+	})
+	if err != nil {
+		return err
+	}
 
 	//c.storage.SetToken(response.AuthToken)
 	//c.storage.SetLogin(response.User.Login)
@@ -86,7 +110,7 @@ func (c *AddCommand) Handle(ctx context.Context, args []string) error {
 	return nil
 }
 
-func readRecordValue(typeName string, reader *bufio.Reader, args ...string) ([]byte, error) {
+func readRecordValue(typeName string, reader *bufio.Reader, args ...string) ([]byte, string, error) {
 	switch typeName {
 	case models.TypeText:
 		return readRecordValueText(reader, args...)
@@ -94,68 +118,81 @@ func readRecordValue(typeName string, reader *bufio.Reader, args ...string) ([]b
 		return readRecordValueFile(reader, args...)
 	case models.TypeLogin:
 		return readRecordValueLogin(reader, args...)
-	case models.TypeBank:
-		return readRecordValueBank(reader, args...)
+	case models.TypeCard:
+		return readNewRecordValueBankCard(reader, args...)
 	}
-	return []byte{}, nil
+	return []byte{}, "", nil
 }
 
 //readRecordValueText if args passed to this function it returns first element as []byte
 //else it asks user to enter text and reads line by line. When two empty line met text considered finished (last two
 //empty lines not included to result value)
-func readRecordValueText(reader *bufio.Reader, args ...string) ([]byte, error) {
-	if len(args) > 0 {
-		return []byte(args[0]), nil
+func readRecordValueText(reader *bufio.Reader, args ...string) ([]byte, string, error) {
+	var (
+		err     error
+		comment string
+		text    []byte
+	)
+	if len(args) < 1 {
+		lastBlank := false
+		prevLine := ""
+		fmt.Println("Enter text (leave two blank lines to finish text)")
+		var tb = strings.Builder{}
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				return nil, "", err
+			}
+			if len(strings.TrimSpace(line)) == 0 {
+				if lastBlank {
+					break
+				}
+				lastBlank = true
+				prevLine = line
+			} else {
+				if lastBlank {
+					tb.WriteString(prevLine)
+					lastBlank = false
+					prevLine = ""
+				}
+				tb.WriteString(line)
+			}
+		}
+		text = []byte(tb.String())
+	} else {
+		text = []byte(args[0])
+		args = args[1:]
 	}
-	lastBlank := false
-	prevLine := ""
-	fmt.Println("Enter text (leave two blank lines to finish text)")
-	var text = strings.Builder{}
-	for {
-		line, err := reader.ReadString('\n')
+
+	if len(args) < 1 {
+		fmt.Print("Enter record comment (can be empty): ")
+		comment, err = reader.ReadString('\n')
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		if len(strings.TrimSpace(line)) == 0 {
-			if lastBlank {
-				break
-			}
-			lastBlank = true
-			prevLine = line
-		} else {
-			if lastBlank {
-				text.WriteString(prevLine)
-				lastBlank = false
-				prevLine = ""
-			}
-			text.WriteString(line)
-		}
+	} else {
+		comment = args[0]
 	}
-	return []byte(text.String()), nil
+
+	return text, strings.TrimSpace(comment), nil
 }
 
 //readRecordValueText if args passed to this function it reads content from that file
 //else it asks user to enter path to the file
-func readRecordValueFile(reader *bufio.Reader, args ...string) ([]byte, error) {
+func readRecordValueFile(reader *bufio.Reader, args ...string) ([]byte, string, error) {
 	var (
 		err      error
+		comment  string
 		filepath string
 		content  []byte
 	)
 
-	if len(args) > 0 {
-		filepath = args[0]
-
-		content, err = os.ReadFile(filepath)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	if len(args) < 1 {
 		for {
 			fmt.Print("Enter path to the file: ")
 			filepath, err = reader.ReadString('\n')
 			if err != nil {
-				return nil, err
+				return nil, "", err
 			}
 			filepath = strings.TrimSpace(filepath)
 
@@ -165,22 +202,46 @@ func readRecordValueFile(reader *bufio.Reader, args ...string) ([]byte, error) {
 					fmt.Println("file not found: ", filepath)
 					continue
 				} else {
-					return nil, err
+					return nil, "", err
 				}
 			}
 			break
 		}
+	} else {
+		filepath = args[0]
+
+		content, err = os.ReadFile(filepath)
+		if err != nil {
+			return nil, "", err
+		}
+		args = args[1:]
 	}
 
-	return models.EncodeFileDataType(&models.FileDataType{
+	data, err := models.EncodeFileDataType(&models.FileDataType{
 		Filename: path.Base(filepath),
 		Contents: content,
 	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(args) < 1 {
+		fmt.Print("Enter record comment (can be empty): ")
+		comment, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		comment = args[0]
+	}
+
+	return data, comment, err
 }
 
-func readRecordValueLogin(reader *bufio.Reader, args ...string) ([]byte, error) {
+func readRecordValueLogin(reader *bufio.Reader, args ...string) ([]byte, string, error) {
 	var (
 		err      error
+		comment  string
 		login    string
 		password string
 	)
@@ -189,34 +250,52 @@ func readRecordValueLogin(reader *bufio.Reader, args ...string) ([]byte, error) 
 		fmt.Print("Enter login: ")
 		login, err = reader.ReadString('\n')
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		login = strings.TrimSpace(login)
 	} else {
 		login = strings.TrimSpace(args[0])
+		args = args[1:]
 	}
 
-	if len(args) < 2 {
+	if len(args) < 1 {
 		fmt.Print("Enter password: ")
 		_pass, err := term.ReadPassword(int(os.Stdin.Fd()))
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		fmt.Print("\n")
 		password = string(_pass)
 	} else {
-		password = args[1]
+		password = args[0]
+		args = args[1:]
 	}
 
-	return models.EncodeLoginDataType(&models.LoginDataType{
+	data, err := models.EncodeLoginDataType(&models.LoginDataType{
 		Login:    login,
 		Password: password,
 	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(args) < 1 {
+		fmt.Print("Enter record comment (can be empty): ")
+		comment, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		comment = args[0]
+	}
+
+	return data, comment, nil
 }
 
-func readRecordValueBank(reader *bufio.Reader, args ...string) ([]byte, error) {
+func readNewRecordValueBankCard(reader *bufio.Reader, args ...string) ([]byte, string, error) {
 	var (
 		err        error
+		comment    string
 		cardNumber string
 		cardHolder string
 		expMonth   string
@@ -224,36 +303,66 @@ func readRecordValueBank(reader *bufio.Reader, args ...string) ([]byte, error) {
 		cvv        string
 	)
 
-	cardNumber, err = readCardNumber(reader)
+	cardNumber, err = readNewCardNumber(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	cardHolder, err = readCardHolderName(reader)
+	cardHolder, err = readNewCardHolderName(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	expMonth, expYear, err = readCardExpiry(reader)
+	expMonth, expYear, err = readNewCardExpiry(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	cvv, err = readCardCVV(reader)
+	cvv, err = readNewCardCVV(reader)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return models.EncodeBankCardDataType(&models.BankCardDataType{
+	data, err := models.EncodeBankCardDataType(&models.BankCardDataType{
 		Number:   cardNumber,
 		Holder:   cardHolder,
 		ExpMonth: expMonth,
 		ExpYear:  expYear,
 		CVV:      cvv,
 	})
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(args) < 1 {
+		fmt.Print("Enter record comment (can be empty): ")
+		comment, err = reader.ReadString('\n')
+		if err != nil {
+			return nil, "", err
+		}
+	} else {
+		comment = args[0]
+	}
+
+	return data, comment, nil
 }
 
-func readCardHolderName(reader *bufio.Reader) (string, error) {
+func readNewCardNumber(reader *bufio.Reader) (string, error) {
+	for {
+		fmt.Print("Enter card number: ")
+		cardNumber, err := reader.ReadString('\n')
+		if err != nil {
+			return "", err
+		}
+		cardNumber = strings.TrimSpace(cardNumber)
+		if len(cardNumber) >= 15 {
+			return cardNumber, nil
+		}
+		fmt.Println("card number is too short")
+	}
+}
+
+func readNewCardHolderName(reader *bufio.Reader) (string, error) {
 	fmt.Print("Enter card holder name (can be empty): ")
 	cardHolder, err := reader.ReadString('\n')
 	if err != nil {
@@ -263,7 +372,7 @@ func readCardHolderName(reader *bufio.Reader) (string, error) {
 	return cardHolder, nil
 }
 
-func readCardExpiry(reader *bufio.Reader) (string, string, error) {
+func readNewCardExpiry(reader *bufio.Reader) (string, string, error) {
 	var (
 		expMonth string
 		expYear  string
@@ -307,7 +416,7 @@ func readCardExpiry(reader *bufio.Reader) (string, string, error) {
 	return expMonth, expYear, nil
 }
 
-func readCardCVV(reader *bufio.Reader) (string, error) {
+func readNewCardCVV(reader *bufio.Reader) (string, error) {
 
 	fmt.Print("Enter card cvv (leave blank if don't want to store it): ")
 	cvv, err := reader.ReadString('\n')
@@ -319,8 +428,11 @@ func readCardCVV(reader *bufio.Reader) (string, error) {
 }
 
 func validateName(name string) error {
-	if strings.ContainsRune(name, '.') {
-		return errors.New("name cannot contain \".\" symbol")
+	//if len(name) == 0 || strings.ContainsRune(name, '.') {
+	//	return errors.New("name cannot be empty or contain \".\" symbol")
+	//}
+	if len(name) == 0 {
+		return errors.New("name cannot be empty")
 	}
 	return nil
 }
@@ -349,6 +461,7 @@ func readRecordType(reader *bufio.Reader) (string, error) {
 		for i, t := range storage.SupportedTypes {
 			fmt.Printf("  [%d] %s\n", i+1, t)
 		}
+		fmt.Printf("enter name of record type or it's number 1-%d\n", len(storage.SupportedTypes))
 		fmt.Print("Enter record type: ")
 		t, err := reader.ReadString('\n')
 		if err != nil {
@@ -364,25 +477,9 @@ func readRecordType(reader *bufio.Reader) (string, error) {
 			continue
 		}
 		if num < 1 || num > len(storage.SupportedTypes) {
-			fmt.Printf("enter name of record type or it's number 1-%d\n", len(storage.SupportedTypes))
 			continue
 		}
 
 		return storage.SupportedTypes[num-1], nil
-	}
-}
-
-func readCardNumber(reader *bufio.Reader) (string, error) {
-	for {
-		fmt.Print("Enter card number: ")
-		cardNumber, err := reader.ReadString('\n')
-		if err != nil {
-			return "", err
-		}
-		cardNumber = strings.TrimSpace(cardNumber)
-		if len(cardNumber) >= 15 {
-			return cardNumber, nil
-		}
-		fmt.Println("card number is too short")
 	}
 }

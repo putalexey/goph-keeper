@@ -15,5 +15,5 @@ var SupportedTypes = []string{
 	models.TypeText,
 	models.TypeFile,
 	models.TypeLogin,
-	models.TypeBank,
+	models.TypeCard,
 }

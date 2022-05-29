@@ -19,7 +19,7 @@ const (
 	TypeText  = "text"
 	TypeFile  = "file"
 	TypeLogin = "login"
-	TypeBank  = "bank"
+	TypeCard  = "card"
 )
 
 type Record struct {
