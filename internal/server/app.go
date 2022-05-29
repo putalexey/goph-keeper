@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"github.com/pkg/errors"
 	"github.com/putalexey/goph-keeper/internal/server/config"
 	"github.com/putalexey/goph-keeper/internal/server/interfaces"
 	"github.com/putalexey/goph-keeper/internal/server/storage"
@@ -13,7 +14,7 @@ import (
 func Run(ctx context.Context, cfg *config.ServerConfig) error {
 	db, err := storage.NewDBConnection(cfg.DatabaseDSN)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot connect to DB")
 	}
 	server := &Server{
 		db: db,
