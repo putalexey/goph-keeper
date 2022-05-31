@@ -22,7 +22,7 @@ func NewRecordDBStorage(db *sql.DB) *RecordDBStorage {
 	return &RecordDBStorage{db: db}
 }
 
-var recordAllFieldsSQL = `"uuid", "user_uuid", "name", "type", "data", "comment", "created_at", "updated_at", "deleted_at"`
+var recordAllFieldsSQL = `"uuid", "user_uuid", "name", "type", "data", "comment", "created_at", "updated_at", "deleted_at", "data_encrypted"`
 
 func (s *RecordDBStorage) Create(ctx context.Context, record *models.Record) error {
 	if record.UUID == "" {
@@ -36,22 +36,31 @@ func (s *RecordDBStorage) Create(ctx context.Context, record *models.Record) err
 		updatedAt := time.Now()
 		record.UpdatedAt = &updatedAt
 	}
-	insertSQL := fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`, recordsTableName, recordAllFieldsSQL)
-	_, err := s.db.ExecContext(ctx, insertSQL,
+	data, dataEncrypted, err := encryptData(record.Data)
+	if err != nil {
+		return fmt.Errorf("update record: encrypt data error: %w", err)
+	}
+	insertSQL := fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`, recordsTableName, recordAllFieldsSQL)
+	_, err = s.db.ExecContext(ctx, insertSQL,
 		record.UUID,
 		record.UserUUID,
 		record.Name,
 		record.Type,
-		record.Data,
+		data,
 		record.Comment,
 		record.CreatedAt,
 		record.UpdatedAt,
 		record.DeletedAt,
+		dataEncrypted,
 	)
 	return err
 }
 
 func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.Record, error) {
+	var (
+		dataEncrypted bool
+		data          []byte
+	)
 	record := &models.Record{}
 
 	selectSQL := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "uuid" = $1 LIMIT 1`, recordAllFieldsSQL, recordsTableName)
@@ -61,11 +70,12 @@ func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.R
 		&record.UserUUID,
 		&record.Name,
 		&record.Type,
-		&record.Data,
+		&data,
 		&record.Comment,
 		&record.CreatedAt,
 		&record.UpdatedAt,
 		&record.DeletedAt,
+		&dataEncrypted,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -73,6 +83,11 @@ func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.R
 		}
 		return nil, err
 	}
+	decryptedData, err := decryptData(data, dataEncrypted)
+	if err != nil {
+		return nil, fmt.Errorf("get record by UUID: decrypt data error: %w", err)
+	}
+	record.Data = decryptedData
 	return record, nil
 }
 
@@ -105,6 +120,10 @@ func (s *RecordDBStorage) FindByUserUUID(ctx context.Context, userUuid string) (
 }
 
 func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid string, name string) (*models.Record, error) {
+	var (
+		dataEncrypted bool
+		data          []byte
+	)
 	record := &models.Record{}
 
 	selectSQL := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "user_uuid" = $1 and "name" = $2 LIMIT 1`, recordAllFieldsSQL, recordsTableName)
@@ -114,11 +133,12 @@ func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid str
 		&record.UserUUID,
 		&record.Name,
 		&record.Type,
-		&record.Data,
+		&data,
 		&record.Comment,
 		&record.CreatedAt,
 		&record.UpdatedAt,
 		&record.DeletedAt,
+		&dataEncrypted,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -126,10 +146,19 @@ func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid str
 		}
 		return nil, err
 	}
+	decryptedData, err := decryptData(data, dataEncrypted)
+	if err != nil {
+		return nil, fmt.Errorf("get record by UUID: decrypt data error: %w", err)
+	}
+	record.Data = decryptedData
 	return record, nil
 }
 
 func (s *RecordDBStorage) Update(ctx context.Context, record *models.Record) error {
+	data, dataEncrypted, err := encryptData(record.Data)
+	if err != nil {
+		return fmt.Errorf("update record: encrypt data error: %w", err)
+	}
 	updatedAt := time.Now()
 	record.UpdatedAt = &updatedAt
 	updateSQL := fmt.Sprintf(`UPDATE "%s" SET
@@ -139,18 +168,20 @@ func (s *RecordDBStorage) Update(ctx context.Context, record *models.Record) err
 "comment" = $4,
 "created_at" = $5,
 "updated_at" = $6,
-"deleted_at" = $7
-WHERE "uuid" = $8`, recordsTableName)
+"deleted_at" = $7,
+"data_encrypted" = $8
+WHERE "uuid" = $9`, recordsTableName)
 	res, err := s.db.ExecContext(
 		ctx,
 		updateSQL,
 		record.Name,
 		record.Type,
-		record.Data,
+		data,
 		record.Comment,
 		record.CreatedAt,
 		record.UpdatedAt,
 		record.DeletedAt,
+		dataEncrypted,
 		record.UUID,
 	)
 
@@ -163,6 +194,16 @@ WHERE "uuid" = $8`, recordsTableName)
 	}
 
 	return err
+}
+
+func encryptData(data []byte) ([]byte, bool, error) {
+	return data, false, nil
+}
+func decryptData(data []byte, dataEncrypted bool) ([]byte, error) {
+	if !dataEncrypted {
+		return data, nil
+	}
+	return data, errors.New("data decryption not implemented")
 }
 
 func (s *RecordDBStorage) Delete(ctx context.Context, record *models.Record) error {
