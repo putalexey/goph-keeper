@@ -1,0 +1,4 @@
+{
+  "server_host": "localhost:3030",
+  "storage_path": "gk-client-config.json"
+}
