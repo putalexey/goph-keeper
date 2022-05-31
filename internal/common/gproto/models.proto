@@ -1,0 +1,129 @@
+syntax = "proto3";
+
+option go_package = "github.com/putalexey/goph-keeper/internal/common/gproto";
+
+package gkeeper.models;
+
+import "google/protobuf/timestamp.proto";
+
+enum RecordType {
+  Text = 0;
+  File = 1;
+  Login = 2;
+  Bank = 3;
+}
+
+enum EventAction {
+  ActionCreate = 0;
+  ActionUpdate = 1;
+  ActionDelete = 2;
+}
+
+
+message User {
+  string UUID = 1;
+  string Login = 2;
+}
+
+message Record {
+  string UUID = 1;
+  string Name = 2;
+  string Type = 3;
+  bytes Data = 4;
+  string Comment = 5;
+  google.protobuf.Timestamp CreatedAt = 6;
+  google.protobuf.Timestamp UpdatedAt = 7;
+  google.protobuf.Timestamp DeletedAt = 8;
+}
+
+message Event {
+  string UUID = 1;
+  string RecordUUID = 2;
+  google.protobuf.Timestamp Date = 3;
+  string Action = 4;
+  bytes Data = 5;
+}
+
+message PingPong {
+  string message = 1;
+}
+
+message Empty {}
+
+message RegisterRequest {
+  string Login = 1;
+  string Password = 2;
+}
+message RegisterResponse {
+  string AuthToken = 1;
+  User User = 2;
+}
+message AuthorizeRequest {
+  string Login = 1;
+  string Password = 2;
+}
+message AuthorizeResponse {
+  string AuthToken = 1;
+  User User = 2;
+}
+message CreateRecordRequest {
+  string AuthToken = 1;
+  string Name = 2;
+  string Type = 3;
+  bytes Data = 4;
+  string Comment = 5;
+}
+message CreateRecordResponse {
+  Record Record = 1;
+}
+enum Field {
+  Unknown = 0;
+  Name = 1;
+  Data = 2;
+  Comment = 3;
+}
+
+message UpdateRecordFieldsRequest {
+  string AuthToken = 1;
+  string UUID = 2;
+  Field Field = 3;
+  bytes Value = 4;
+}
+message UpdateRecordFieldsResponse {
+  Record Record = 1;
+}
+message DeleteRecordRequest {
+  string AuthToken = 1;
+  string UUID = 2;
+}
+message GetUpdatesRequest {
+  google.protobuf.Timestamp FromDate = 1;
+}
+message GetUpdatesResponse {
+  repeated Event Events = 1;
+}
+
+message GetRecordRequest {
+  string AuthToken = 1;
+  string Name = 2;
+}
+
+message GetRecordResponse {
+  Record Record = 1;
+}
+
+message GetRecordsRequest {
+  string AuthToken = 1;
+}
+
+message RecordListItem {
+  string UUID = 1;
+  string Name = 2;
+  string Type = 3;
+  google.protobuf.Timestamp CreatedAt = 4;
+  google.protobuf.Timestamp UpdatedAt = 5;
+}
+
+message GetRecordsResponse {
+  repeated RecordListItem Records = 1;
+}
