@@ -23,6 +23,10 @@ proto:
 migrate:
 	cd migrations; GOOSE_DRIVER=postgres GOOSE_DBSTRING="user=postgres password=secret dbname=postgres sslmode=disable" goose up
 
+test:
+	go test ./internal/server/storage
+#	go test ./...
+
 #docs:
 #	cd internal/app/shortener/
 #	swag init -g ./shortner.go
