@@ -18,6 +18,8 @@ type ServerConfig struct {
 	DatabaseDSN string `env:"DATABASE_URI" json:"database"`
 	// path to migrations dir
 	MigrationsDir string `env:"DATABASE_MIGRATIONS" envDefault:"migrations" json:"migrations"`
+	// key to encrypt data in DB with
+	EncryptionKey string `env:"ENCRYPTION_KEY" json:"encryption_key"`
 }
 
 type ConfigFile struct {
@@ -85,6 +87,7 @@ func parseFlags() map[string]string {
 	migrationsDirFlag := flag.String("m", "", "Путь до папки с миграциями базы")
 	addressFlag := flag.String("a", "", "Адрес запуска HTTP-сервера")
 	logfilePathFlag := flag.String("l", "", "Путь к файлу лога (по-умолчанию вывод в консоль)")
+	encryptKeyFlag := flag.String("k", "", "Пароль шифрования данных записей")
 	flag.Parse()
 
 	cfg := make(map[string]string)
@@ -103,6 +106,9 @@ func parseFlags() map[string]string {
 	if *logfilePathFlag != "" {
 		cfg["LogfilePath"] = *logfilePathFlag
 	}
+	if *encryptKeyFlag != "" {
+		cfg["EncryptionKey"] = *encryptKeyFlag
+	}
 	return cfg
 }
 
@@ -118,5 +124,8 @@ func applyArgsToConfig(config *ServerConfig, args map[string]string) {
 	}
 	if value, ok := args["LogfilePath"]; ok {
 		config.LogfilePath = value
+	}
+	if value, ok := args["EncryptionKey"]; ok {
+		config.EncryptionKey = value
 	}
 }

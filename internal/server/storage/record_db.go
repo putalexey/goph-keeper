@@ -2,6 +2,9 @@ package storage
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -15,11 +18,12 @@ var _ RecordStorager = &RecordDBStorage{}
 var recordsTableName = "records"
 
 type RecordDBStorage struct {
-	db *sql.DB
+	db         *sql.DB
+	encryptKey string
 }
 
-func NewRecordDBStorage(db *sql.DB) *RecordDBStorage {
-	return &RecordDBStorage{db: db}
+func NewRecordDBStorage(db *sql.DB, encryptKey string) *RecordDBStorage {
+	return &RecordDBStorage{db: db, encryptKey: encryptKey}
 }
 
 var recordAllFieldsSQL = `"uuid", "user_uuid", "name", "type", "data", "comment", "created_at", "updated_at", "deleted_at", "data_encrypted"`
@@ -36,7 +40,8 @@ func (s *RecordDBStorage) Create(ctx context.Context, record *models.Record) err
 		updatedAt := time.Now()
 		record.UpdatedAt = &updatedAt
 	}
-	data, dataEncrypted, err := encryptData(record.Data)
+
+	data, isEncrypted, err := s.encryptData(record.Data)
 	if err != nil {
 		return fmt.Errorf("update record: encrypt data error: %w", err)
 	}
@@ -51,16 +56,13 @@ func (s *RecordDBStorage) Create(ctx context.Context, record *models.Record) err
 		record.CreatedAt,
 		record.UpdatedAt,
 		record.DeletedAt,
-		dataEncrypted,
+		isEncrypted,
 	)
 	return err
 }
 
 func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.Record, error) {
-	var (
-		dataEncrypted bool
-		data          []byte
-	)
+	var dataWasEncrypted bool
 	record := &models.Record{}
 
 	selectSQL := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "uuid" = $1 LIMIT 1`, recordAllFieldsSQL, recordsTableName)
@@ -70,12 +72,12 @@ func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.R
 		&record.UserUUID,
 		&record.Name,
 		&record.Type,
-		&data,
+		&record.Data,
 		&record.Comment,
 		&record.CreatedAt,
 		&record.UpdatedAt,
 		&record.DeletedAt,
-		&dataEncrypted,
+		&dataWasEncrypted,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -83,15 +85,16 @@ func (s *RecordDBStorage) GetByUUID(ctx context.Context, uuid string) (*models.R
 		}
 		return nil, err
 	}
-	decryptedData, err := decryptData(data, dataEncrypted)
+	decrypted, err := s.decryptData(record.Data, dataWasEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("get record by UUID: decrypt data error: %w", err)
 	}
-	record.Data = decryptedData
+	record.Data = decrypted
 	return record, nil
 }
 
 func (s *RecordDBStorage) FindByUserUUID(ctx context.Context, userUuid string) ([]models.Record, error) {
+	var dataWasEncrypted bool
 	records := make([]models.Record, 0)
 	selectSQL := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "user_uuid" = $1 and deleted_at is null`, recordAllFieldsSQL, recordsTableName)
 	rows, err := s.db.QueryContext(ctx, selectSQL, userUuid)
@@ -110,20 +113,23 @@ func (s *RecordDBStorage) FindByUserUUID(ctx context.Context, userUuid string) (
 			&record.CreatedAt,
 			&record.UpdatedAt,
 			&record.DeletedAt,
+			&dataWasEncrypted,
 		)
 		if err != nil {
 			return nil, err
 		}
+		decrypted, err := s.decryptData(record.Data, dataWasEncrypted)
+		if err != nil {
+			return nil, fmt.Errorf("get record by UUID: decrypt data error: %w", err)
+		}
+		record.Data = decrypted
 		records = append(records, record)
 	}
 	return records, nil
 }
 
 func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid string, name string) (*models.Record, error) {
-	var (
-		dataEncrypted bool
-		data          []byte
-	)
+	var dataWasEncrypted bool
 	record := &models.Record{}
 
 	selectSQL := fmt.Sprintf(`SELECT %s FROM "%s" WHERE "user_uuid" = $1 and "name" = $2 LIMIT 1`, recordAllFieldsSQL, recordsTableName)
@@ -133,12 +139,12 @@ func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid str
 		&record.UserUUID,
 		&record.Name,
 		&record.Type,
-		&data,
+		&record.Data,
 		&record.Comment,
 		&record.CreatedAt,
 		&record.UpdatedAt,
 		&record.DeletedAt,
-		&dataEncrypted,
+		&dataWasEncrypted,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -146,16 +152,16 @@ func (s *RecordDBStorage) GetByUserUUIDAndName(ctx context.Context, userUuid str
 		}
 		return nil, err
 	}
-	decryptedData, err := decryptData(data, dataEncrypted)
+	decrypted, err := s.decryptData(record.Data, dataWasEncrypted)
 	if err != nil {
 		return nil, fmt.Errorf("get record by UUID: decrypt data error: %w", err)
 	}
-	record.Data = decryptedData
+	record.Data = decrypted
 	return record, nil
 }
 
 func (s *RecordDBStorage) Update(ctx context.Context, record *models.Record) error {
-	data, dataEncrypted, err := encryptData(record.Data)
+	data, isEncrypted, err := s.encryptData(record.Data)
 	if err != nil {
 		return fmt.Errorf("update record: encrypt data error: %w", err)
 	}
@@ -181,7 +187,7 @@ WHERE "uuid" = $9`, recordsTableName)
 		record.CreatedAt,
 		record.UpdatedAt,
 		record.DeletedAt,
-		dataEncrypted,
+		isEncrypted,
 		record.UUID,
 	)
 
@@ -196,14 +202,55 @@ WHERE "uuid" = $9`, recordsTableName)
 	return err
 }
 
-func encryptData(data []byte) ([]byte, bool, error) {
-	return data, false, nil
-}
-func decryptData(data []byte, dataEncrypted bool) ([]byte, error) {
-	if !dataEncrypted {
-		return data, nil
+func (s *RecordDBStorage) encryptData(srcData []byte) ([]byte, bool, error) {
+	if s.encryptKey == "" {
+		return srcData, false, nil
 	}
-	return data, errors.New("data decryption not implemented")
+	key := sha256.Sum256([]byte(s.encryptKey))
+	aesblock, err := aes.NewCipher(key[:])
+	if err != nil {
+		return nil, false, err
+	}
+	aesgcm, err := cipher.NewGCM(aesblock)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// создаём вектор инициализации
+	nonce := key[len(key)-aesgcm.NonceSize():]
+
+	// расшифровываем
+	encrypted := aesgcm.Seal(nil, nonce, srcData, nil)
+	return encrypted, true, nil
+}
+func (s *RecordDBStorage) decryptData(srcData []byte, dataEncrypted bool) ([]byte, error) {
+	if !dataEncrypted {
+		return srcData, nil
+	}
+	if s.encryptKey == "" {
+		return nil, errors.New("encryption key is empty")
+	}
+
+	key := sha256.Sum256([]byte(s.encryptKey))
+	aesblock, err := aes.NewCipher(key[:])
+	if err != nil {
+		return nil, err
+	}
+	aesgcm, err := cipher.NewGCM(aesblock)
+	if err != nil {
+		return nil, err
+	}
+
+	// создаём вектор инициализации
+	nonce := key[len(key)-aesgcm.NonceSize():]
+
+	// расшифровываем
+	decrypted, err := aesgcm.Open(nil, nonce, srcData, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return decrypted, nil
 }
 
 func (s *RecordDBStorage) Delete(ctx context.Context, record *models.Record) error {

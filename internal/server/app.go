@@ -21,7 +21,8 @@ func Run(ctx context.Context, logger *zap.SugaredLogger, cfg *config.ServerConfi
 		return errors.Wrap(err, "cannot connect to DB")
 	}
 	server := &Server{
-		db: db,
+		db:            db,
+		encryptionKey: cfg.EncryptionKey,
 	}
 	initStorages(server)
 
@@ -49,6 +50,7 @@ func Run(ctx context.Context, logger *zap.SugaredLogger, cfg *config.ServerConfi
 type Server struct {
 	db                *sql.DB
 	StoragesContainer *storage.StoragesContainer
+	encryptionKey     string
 }
 
 // initStorage initializes storagers container
@@ -56,7 +58,7 @@ func initStorages(server *Server) {
 	server.StoragesContainer = &storage.StoragesContainer{
 		UserStorage:   storage.NewUserDBStorage(server.db),
 		AuthStorage:   storage.NewAuthDBStorage(server.db),
-		RecordStorage: storage.NewRecordDBStorage(server.db),
+		RecordStorage: storage.NewRecordDBStorage(server.db, server.encryptionKey),
 		EventStorage:  storage.NewEventStorager(server.db),
 	}
 }
