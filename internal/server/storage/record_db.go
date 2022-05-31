@@ -101,6 +101,8 @@ func (s *RecordDBStorage) FindByUserUUID(ctx context.Context, userUuid string) (
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		record := models.Record{}
 		err = rows.Scan(
