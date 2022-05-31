@@ -32,7 +32,7 @@ func main() {
 	}
 	defer logclose()
 
-	fmt.Printf("goph-keeper client v%s\n", buildVersion)
+	fmt.Printf("goph-keeper client %s\n", buildVersion)
 
 	c, err := client.NewClient(context.Background(), logger, conf)
 	if err != nil {
