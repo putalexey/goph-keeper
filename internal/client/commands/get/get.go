@@ -131,10 +131,16 @@ func printRecordFile(record *gproto.Record, args []string, reader *bufio.Reader)
 		return err
 	}
 
-	fmt.Print("Where to save file? ")
-	filepath, err := reader.ReadString('\n')
-	if err != nil {
-		return err
+	var filepath string
+	if len(args) < 1 {
+		fmt.Print("Where to save file? ")
+		filepath, err = reader.ReadString('\n')
+		if err != nil {
+			return err
+		}
+	} else {
+		filepath = args[0]
+		args = args[1:]
 	}
 
 	if isDir(filepath) {
