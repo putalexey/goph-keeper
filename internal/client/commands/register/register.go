@@ -27,6 +27,16 @@ func (c *Register) GetName() string {
 	return "register"
 }
 
+func (c *Register) GetFullDescription() string {
+	return `Usage: gk-client register [username]
+
+Register new user on the server. After successful registration client is authorized automatically`
+}
+
+func (c *Register) GetShortDescription() string {
+	return "register new user and authorize"
+}
+
 func (c *Register) Handle(ctx context.Context, args []string) error {
 	var (
 		err      error

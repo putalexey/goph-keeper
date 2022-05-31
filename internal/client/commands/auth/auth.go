@@ -27,6 +27,16 @@ func (c *Auth) GetName() string {
 	return "auth"
 }
 
+func (c *Auth) GetFullDescription() string {
+	return `Usage: gk-client auth [login]
+
+Authorizes user on the server`
+}
+
+func (c *Auth) GetShortDescription() string {
+	return "authorize user"
+}
+
 func (c *Auth) Handle(ctx context.Context, args []string) error {
 	var (
 		err      error

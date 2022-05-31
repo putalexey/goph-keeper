@@ -28,10 +28,14 @@ func (c *Edit) GetName() string {
 	return "edit"
 }
 
-func (c *Edit) GetHelp() string {
-	return `edit record syntax:
-gk-client edit
-gk-client edit [record_name] [field] [value|filepath]`
+func (c *Edit) GetFullDescription() string {
+	return `Usage: gk-client edit [record_name [field [value|filepath]]]
+
+Edit field of the record saved earlier`
+}
+
+func (c *Edit) GetShortDescription() string {
+	return "edit field of the saved record"
 }
 
 func (c *Edit) Handle(ctx context.Context, args []string) error {

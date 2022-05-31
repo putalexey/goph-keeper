@@ -28,10 +28,16 @@ func (c *Get) GetName() string {
 	return "get"
 }
 
-func (c *Get) GetHelp() string {
-	return `get record syntax:
-gk-client get
-gk-client get [record_name]`
+func (c *Get) GetFullDescription() string {
+	return `Usage:
+    gk-client get [record_name]
+    gk-client get <file_record_name> [filepath]
+
+Show records. If type of record was file, is will be saved to provided path`
+}
+
+func (c *Get) GetShortDescription() string {
+	return "register new user and authorize"
 }
 
 func (c *Get) Handle(ctx context.Context, args []string) error {

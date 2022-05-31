@@ -24,10 +24,14 @@ func (c *Delete) GetName() string {
 	return "delete"
 }
 
-func (c *Delete) GetHelp() string {
-	return `delete record syntax:
-gk-client delete
-gk-client delete [record_name]`
+func (c *Delete) GetFullDescription() string {
+	return `Usage: gk-client delete [record_name]
+
+Delete record from server`
+}
+
+func (c *Delete) GetShortDescription() string {
+	return "delete record"
 }
 
 func (c *Delete) Handle(ctx context.Context, args []string) error {

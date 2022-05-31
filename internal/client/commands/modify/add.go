@@ -26,13 +26,19 @@ func (c *Add) GetName() string {
 	return "add"
 }
 
-func (c *Add) GetHelp() string {
-	return `add new record syntax:
-gk-client add
-gk-client add text [record_name] [text] [comment]
-gk-client add file [record_name] [filepath] [comment]
-gk-client add login [record_name] [login] [password] [comment]
-gk-client add card [record_name]`
+func (c *Add) GetFullDescription() string {
+	return `Usage:
+    gk-client add [type]
+    gk-client add text [record_name] [text] [comment]
+    gk-client add file [record_name] [filepath] [comment]
+    gk-client add login [record_name] [login] [password] [comment]
+    gk-client add card [record_name]
+
+Saves new record to the server`
+}
+
+func (c *Add) GetShortDescription() string {
+	return "add new record"
 }
 
 func (c *Add) Handle(ctx context.Context, args []string) error {

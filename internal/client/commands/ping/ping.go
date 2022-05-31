@@ -20,6 +20,16 @@ func (c *Ping) GetName() string {
 	return "ping"
 }
 
+func (c *Ping) GetFullDescription() string {
+	return `Usage: gk-client ping
+
+Test connection to the server`
+}
+
+func (c *Ping) GetShortDescription() string {
+	return "tests connection to the server"
+}
+
 func (c *Ping) Handle(ctx context.Context, _ []string) error {
 	response, err := c.remote.Ping(ctx, &gproto.PingPong{Message: "ping"})
 	if err != nil {

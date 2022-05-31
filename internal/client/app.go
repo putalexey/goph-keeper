@@ -6,6 +6,7 @@ import (
 	"github.com/putalexey/goph-keeper/internal/client/commands"
 	"github.com/putalexey/goph-keeper/internal/client/commands/auth"
 	"github.com/putalexey/goph-keeper/internal/client/commands/get"
+	"github.com/putalexey/goph-keeper/internal/client/commands/help"
 	"github.com/putalexey/goph-keeper/internal/client/commands/list"
 	"github.com/putalexey/goph-keeper/internal/client/commands/modify"
 	"github.com/putalexey/goph-keeper/internal/client/commands/ping"
@@ -48,6 +49,7 @@ func NewClient(ctx context.Context, logger *zap.SugaredLogger, config *config.Cl
 		get.NewGetCommand(logger, app, app.Storage),
 		list.NewListCommand(logger, app, app.Storage),
 	}
+	app.Commands = append(app.Commands, help.NewHelpCommand(logger, app, app.Storage, app.Commands))
 	return app, nil
 }
 

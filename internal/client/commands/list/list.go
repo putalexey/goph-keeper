@@ -25,9 +25,14 @@ func (c *List) GetName() string {
 	return "list"
 }
 
-func (c *List) GetHelp() string {
-	return `list records syntax:
-gk-client list`
+func (c *List) GetFullDescription() string {
+	return `Usage: gk-client list
+
+List all saved records`
+}
+
+func (c *List) GetShortDescription() string {
+	return `list records`
 }
 
 func (c *List) Handle(ctx context.Context, args []string) error {
